@@ -99,10 +99,8 @@
 
 /************************** Function Prototypes ******************************/
 
-int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr,
-			u16 DeviceId, u16 IntrId);
-static int SetupInterruptSystem(INTC *IntcInstancePtr,
-				XZDma *InstancePtr, u16 IntrId);
+int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr,u16 DeviceId, u16 IntrId);
+static int SetupInterruptSystem(INTC *IntcInstancePtr, XZDma *InstancePtr, u16 IntrId);
 static void DoneHandler(void *CallBackRef);
 static void ErrorHandler(void *CallBackRef, u32 Mask);
 
@@ -180,11 +178,8 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	u32 Index;
 	u32 Value;
 
-	/*
-	 * Initialize the ZDMA driver so that it's ready to use.
-	 * Look up the configuration in the config table,
-	 * then initialize it.
-	 */
+	 //* Initialize the ZDMA driver so that it's ready to use.
+	 //* Look up the configuration in the config table, then initialize it.
 	Config = XZDma_LookupConfig(DeviceId);
 	if (NULL == Config) {
 		return XST_FAILURE;
@@ -194,25 +189,23 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-	/*
-	 * Performs the self-test to check hardware build.
-	 */
+
+	 // Performs the self-test to check hardware build.
 	Status = XZDma_SelfTest(ZdmaInstPtr);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
 
-	/* Filling the buffer for data transfer */
+	//* Filling the buffer for data transfer */
 	Value = TESTVALUE;
 	for (Index = 0; Index < SIZE/4; Index++) {
 		*(ZDmaSrcBuf +Index) = Value++;
 	}
 
-	/* * Invalidating destination address and flushing
-	 * source address in cache */
+	/* * Invalidating destination address and flushing source address in cache */
 	if (!Config->IsCacheCoherent) {
-	Xil_DCacheFlushRange((INTPTR)ZDmaSrcBuf, SIZE);
-	Xil_DCacheInvalidateRange((INTPTR)ZDmaDstBuf, SIZE);
+		Xil_DCacheFlushRange((INTPTR)ZDmaSrcBuf, SIZE);
+		Xil_DCacheInvalidateRange((INTPTR)ZDmaDstBuf, SIZE);
 	}
 
 	/* ZDMA has set in simple transfer of Normal mode */
@@ -224,9 +217,8 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	/* Interrupt call back has been set */
 	XZDma_SetCallBack(ZdmaInstPtr, XZDMA_HANDLER_DONE,  (void *)DoneHandler, ZdmaInstPtr);
 	XZDma_SetCallBack(ZdmaInstPtr, XZDMA_HANDLER_ERROR, (void *)ErrorHandler, ZdmaInstPtr);
-	/*
-	 * Connect to the interrupt controller.
-	 */
+
+	//* Connect to the interrupt controller.
 	Status = SetupInterruptSystem(IntcInstPtr, ZdmaInstPtr, IntrId);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
@@ -251,9 +243,8 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	Configure.DstQos = 0;
 
 	XZDma_SetChDataConfig(ZdmaInstPtr, &Configure);
-	/*
-	 * Transfer elements
-	 */
+
+	/* Transfer elements */
 	Data.DstAddr = (UINTPTR)ZDmaDstBuf;
 	Data.DstCoherent = 1;
 	Data.Pause = 0;
