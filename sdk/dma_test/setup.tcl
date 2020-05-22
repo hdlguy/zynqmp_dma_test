@@ -5,7 +5,7 @@ file delete -force $sdk_dir/hw
 file delete -force $sdk_dir/bsp
 
 set hwproject "hw"
-set hwspec ../../../implement/results/top.hdf
+set hwspec ../../implement/results/top.hdf
 set bsp "bsp"
 #set proc "ps7_cortexa9_0"
 set proc "psu_cortexr5_0"
