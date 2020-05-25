@@ -88,7 +88,7 @@
 #endif
 
 #ifndef TESTAPP_GEN
-#define SIZE		1000000 /**< Size of the data to be transferred */
+#define SIZE		(64*1024) //1000000 /**< Size of the data to be transferred */
 #else
 #define SIZE		1000 /**< Size of the data to be transferred */
 #endif
@@ -196,6 +196,13 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 		return XST_FAILURE;
 	}
 
+//	u32* bram_buf = (u32*)(XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR);
+//	Value = TESTVALUE;
+//	for (Index = 0; Index < SIZE/4; Index++) {
+//		bram_buf[Index] = Value;
+//		Value++;
+//	}
+
 	//* Filling the buffer for data transfer */
 	Value = TESTVALUE;
 	for (Index = 0; Index < SIZE/4; Index++) {
@@ -249,6 +256,7 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	Data.DstCoherent = 1;
 	Data.Pause = 0;
 	Data.SrcAddr = (UINTPTR)ZDmaSrcBuf;
+	//Data.SrcAddr = (UINTPTR)bram_buf;
 	Data.SrcCoherent = 1;
 	Data.Size = SIZE; /* Size in bytes */
 
@@ -268,6 +276,7 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	/* Checking the data transferred */
 	for (Index = 0; Index < SIZE/4; Index++) {
 		if (ZDmaSrcBuf[Index] != ZDmaDstBuf[Index]) {
+		//if (bram_buf[Index] != ZDmaDstBuf[Index]) {
 			return XST_FAILURE;
 		}
 	}

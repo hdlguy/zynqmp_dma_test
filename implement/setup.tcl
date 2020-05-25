@@ -10,10 +10,11 @@ load_features ipintegrator
 
 update_ip_catalog
 
-#read_ip ../source/receiver/rx_chan_ila/rx_chan_ila.xci
+read_ip ../source/test_bram/test_bram.xci
+read_ip ../source/bram_ila/bram_ila.xci
 
-#upgrade_ip -quiet  [get_ips *]
-#generate_target {all} [get_ips *]
+upgrade_ip -quiet  [get_ips *]
+generate_target {all} [get_ips *]
 
 # make the Zynq block diagram
 source ../source/system.tcl
