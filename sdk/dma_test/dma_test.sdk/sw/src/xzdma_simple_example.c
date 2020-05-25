@@ -119,8 +119,9 @@ static INTC Intc;	/**< XIntc Instance */
 	u8 ZDmaSrcBuf[SIZE]; /**< Source buffer */
 #else
 	u8 ZDmaDstBuf[SIZE] __attribute__ ((aligned (64)));	/**< Destination buffer */
-	u8 ZDmaSrcBuf[SIZE] __attribute__ ((aligned (64)));	/**< Source buffer */
+	//u8 ZDmaSrcBuf[SIZE] __attribute__ ((aligned (64)));	/**< Source buffer */
 #endif
+uint8_t* ZDmaSrcBuf = (uint8_t*)(XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR);
 volatile static int Done = 0;				/**< Done flag */
 volatile static int ErrorStatus = 0;			/**< Error Status flag*/
 
@@ -140,6 +141,14 @@ volatile static int ErrorStatus = 0;			/**< Error Status flag*/
 int main(void)
 {
 	int Status;
+
+//	// initialize the bram for dma transfer.
+//	uint32_t* bram_buf = (uint32_t*)(XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR);
+//	Value = TESTVALUE;
+//	for (Index = 0; Index < SIZE/4; Index++) {
+//		bram_buf[Index] = Value;
+//		Value++;
+//	}
 
 	/* Run the simple example */
 	Status = XZDma_SimpleExample(&Intc, &ZDma, (u16)ZDMA_DEVICE_ID, ZDMA_INTR_DEVICE_ID);
@@ -196,17 +205,11 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 		return XST_FAILURE;
 	}
 
-//	u32* bram_buf = (u32*)(XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR);
-//	Value = TESTVALUE;
-//	for (Index = 0; Index < SIZE/4; Index++) {
-//		bram_buf[Index] = Value;
-//		Value++;
-//	}
-
 	//* Filling the buffer for data transfer */
 	Value = TESTVALUE;
 	for (Index = 0; Index < SIZE/4; Index++) {
-		*(ZDmaSrcBuf +Index) = Value++;
+		//*(ZDmaSrcBuf +Index) = Value++;
+		ZDmaSrcBuf[Index] = Value++;
 	}
 
 	/* * Invalidating destination address and flushing source address in cache */
@@ -222,7 +225,7 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	}
 
 	/* Interrupt call back has been set */
-	XZDma_SetCallBack(ZdmaInstPtr, XZDMA_HANDLER_DONE,  (void *)DoneHandler, ZdmaInstPtr);
+	XZDma_SetCallBack(ZdmaInstPtr, XZDMA_HANDLER_DONE,  (void *)DoneHandler,  ZdmaInstPtr);
 	XZDma_SetCallBack(ZdmaInstPtr, XZDMA_HANDLER_ERROR, (void *)ErrorHandler, ZdmaInstPtr);
 
 	//* Connect to the interrupt controller.
