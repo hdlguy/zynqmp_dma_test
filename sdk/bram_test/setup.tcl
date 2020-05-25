@@ -1,4 +1,4 @@
-set sdk_dir ./test.sdk
+set sdk_dir ./bram_test.sdk
 
 file delete -force $sdk_dir/.metadata
 file delete -force $sdk_dir/hw
