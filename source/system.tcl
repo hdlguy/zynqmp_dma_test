@@ -125,7 +125,9 @@ set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:axi_bram_ctrl:4.1\
+xilinx.com:ip:axi_gpio:2.0\
 xilinx.com:ip:smartconnect:1.0\
+xilinx.com:ip:c_counter_binary:12.0\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:system_ila:1.1\
 xilinx.com:ip:zynq_ultra_ps_e:3.3\
@@ -209,11 +211,27 @@ proc create_root_design { parentCell } {
    CONFIG.SINGLE_PORT_BRAM {1} \
  ] $axi_bram_ctrl_0
 
+  # Create instance: axi_gpio_0, and set properties
+  set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
+  set_property -dict [ list \
+   CONFIG.C_ALL_INPUTS {1} \
+   CONFIG.C_GPIO_WIDTH {32} \
+   CONFIG.GPIO_BOARD_INTERFACE {Custom} \
+   CONFIG.USE_BOARD_FLOW {true} \
+ ] $axi_gpio_0
+
   # Create instance: axi_smc, and set properties
   set axi_smc [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc ]
   set_property -dict [ list \
+   CONFIG.NUM_MI {2} \
    CONFIG.NUM_SI {1} \
  ] $axi_smc
+
+  # Create instance: c_counter_binary_0, and set properties
+  set c_counter_binary_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_counter_binary:12.0 c_counter_binary_0 ]
+  set_property -dict [ list \
+   CONFIG.Output_Width {32} \
+ ] $c_counter_binary_0
 
   # Create instance: rst_ps8_0_99M, and set properties
   set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
@@ -894,15 +912,18 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net axi_bram_ctrl_0_BRAM_PORTA [get_bd_intf_ports bram0] [get_bd_intf_pins axi_bram_ctrl_0/BRAM_PORTA]
   connect_bd_intf_net -intf_net axi_smc_M00_AXI [get_bd_intf_pins axi_bram_ctrl_0/S_AXI] [get_bd_intf_pins axi_smc/M00_AXI]
 connect_bd_intf_net -intf_net [get_bd_intf_nets axi_smc_M00_AXI] [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
+  connect_bd_intf_net -intf_net axi_smc_M01_AXI [get_bd_intf_pins axi_gpio_0/S_AXI] [get_bd_intf_pins axi_smc/M01_AXI]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_LPD [get_bd_intf_pins axi_smc/S00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_LPD]
 
   # Create port connections
-  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_ports axi_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_smc/aresetn] [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins system_ila_0/resetn]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_ports axi_aclk] [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_smc/aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins system_ila_0/clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+  connect_bd_net -net c_counter_binary_0_Q [get_bd_pins axi_gpio_0/gpio_io_i] [get_bd_pins c_counter_binary_0/Q]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_ports axi_aresetn] [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins axi_smc/aresetn] [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins system_ila_0/resetn]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_ports axi_aclk] [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_smc/aclk] [get_bd_pins c_counter_binary_0/CLK] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins system_ila_0/clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_99M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
   create_bd_addr_seg -range 0x00010000 -offset 0x80000000 [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] SEG_axi_bram_ctrl_0_Mem0
+  create_bd_addr_seg -range 0x00010000 -offset 0x80010000 [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] SEG_axi_gpio_0_Reg
 
 
   # Restore current instance

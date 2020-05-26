@@ -186,6 +186,8 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	XZDma_Transfer Data;
 	u32 Index;
 	u32 Value;
+	uint32_t* timer = (uint32_t *)XPAR_AXI_GPIO_0_BASEADDR;
+
 
 	 //* Initialize the ZDMA driver so that it's ready to use.
 	 //* Look up the configuration in the config table, then initialize it.
@@ -263,10 +265,17 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 	Data.SrcCoherent = 1;
 	Data.Size = SIZE; /* Size in bytes */
 
-	XZDma_Start(ZdmaInstPtr, &Data, 1); /* Initiates the data transfer */
-
-	/* Wait till DMA error or done interrupt generated */
-	while (!ErrorStatus && (Done == 0));
+    uint32_t time1, time2;
+    const uint32_t Nread = 100;
+    time1 = *timer;
+    // repeat the dma transfer Nread times.
+    for (uint32_t j=0; j<Nread; j++){
+    	XZDma_Start(ZdmaInstPtr, &Data, 1); /* Initiates the data transfer */
+		while (!ErrorStatus && (Done == 0)); /* Wait till DMA error or done interrupt generated */
+		XZDma_IntrClear(ZdmaInstPtr, (XZDMA_IXR_ALL_INTR_MASK));
+		Done = 0;
+    }
+    time2 = *timer;
 
 	if (ErrorStatus) {
 		if (ErrorStatus & XZDMA_IXR_AXI_WR_DATA_MASK)
@@ -283,6 +292,23 @@ int XZDma_SimpleExample(INTC *IntcInstPtr, XZDma *ZdmaInstPtr, u16 DeviceId, u16
 			return XST_FAILURE;
 		}
 	}
+
+    double runtime = (time2-time1)/100.0e6;
+    xil_printf("delta time = %d\n\r", (int)(time2-time1));
+    xil_printf("dma runtime = %d milliseconds\n\r", (int)(1000*runtime) );
+
+    // non-dma
+    time1 = *timer;
+    for (uint32_t j=0; j<Nread; j++){
+    	for (uint32_t i=0; i<SIZE/4; i++){
+    		ZDmaDstBuf[i] = ZDmaSrcBuf[i];
+    	}
+    }
+    time2 = *timer;
+
+    runtime = (time2-time1)/100.0e6;
+    xil_printf("delta time = %d\n\r", (int)(time2-time1));
+    xil_printf("non-dma runtime = %d milliseconds\n\r", (int)(1000*runtime) );
 
 	Done = 0;
 
